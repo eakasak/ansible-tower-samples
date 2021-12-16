@@ -1,0 +1,203 @@
+---
+# - name: Install the latest version (httpd)
+#   yum:
+#     name: httpd
+#     state: latest
+
+- name: Install gcc
+  command: yum -y install gcc
+
+- name: Install tcl
+  command: yum -y install tcl 
+
+# - name: Install python36u
+#   command: yum install -y https://repo.ius.io/ius-release-el7.rpm
+#   ignore_errors: yes
+
+# - name: Install python36u
+#   command: yum -y install python36u python36u-libs python36u-devel python36u-pip 
+#   ignore_errors: yes
+
+# - name: Install python36-pexpect
+#   command: yum install python36-pexpect -y
+#   ignore_errors: yes
+  
+
+# - name: Install dependencies
+#   yum:
+#     name:
+#       - gcc
+#       - tcl
+#       - python
+#       - python-pip
+#       - python-setuptools
+#     state: latest
+#     # update_cache: True
+#   become: true
+
+
+# - name: Download redis.rpm file
+#   get_url:
+#     url: https://rpmfind.net/linux/remi/enterprise/7/remi/x86_64/redis-6.2.6-1.el7.remi.x86_64.rpm
+#     dest: /home/demo
+#     mode: '0644'
+
+# - name: install redis
+#   yum:
+#     name: /home/demo/redis-6.2.6-1.el7.remi.x86_64.rpm
+#     state: present
+
+- name: Create a directory {{ PATH_INSTALL }} if it does not exist
+  file:
+    path: '{{ PATH_INSTALL }}'
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Download Redis File Install Version {{ REDIS_VERSION }}
+  get_url:
+    url: https://download.redis.io/releases/redis-{{ REDIS_VERSION }}.tar.gz
+    dest: '{{ PATH_INSTALL }}/redis-{{ REDIS_VERSION }}.tar.gz'
+  become: yes
+
+# - name: Unarchive redis-{{ REDIS_VERSION }}.tar.gz
+#   unarchive:
+#     src: redis-{{ REDIS_VERSION }}.tar.gz
+#     dest: '{{ PATH_INSTALL }}'
+
+- name: Unarchive redis-{{ REDIS_VERSION }}.tar.gz
+  command: tar -xvf redis-{{ REDIS_VERSION }}.tar.gz chdir={{ PATH_INSTALL }}
+
+# - name: make redis-{{ REDIS_VERSION }}.tar.gz
+#   command: make install chdir={{ PATH_INSTALL }}/redis-{{ REDIS_VERSION }}
+
+- name: Build the default target
+  make:
+    chdir: '{{ PATH_INSTALL }}/redis-{{ REDIS_VERSION }}'
+
+- name: Run 'install' target as root
+  make:
+    chdir: '{{ PATH_INSTALL }}/redis-{{ REDIS_VERSION }}'
+    target: install
+
+# - name: Initial Redisport
+#   expect:
+#     command: ./install_server.sh -y
+#     chdir: '{{ PATH_INSTALL }}/redis-{{ REDIS_VERSION }}/utils/'
+#     responses:
+#       Question:
+#           - 'Please select the redis port for this instance: \[6379\]': 7000
+#           # - /etc/redis-7000/redis.conf
+#           # - /var/log/redis_7000.log
+#           # - /data/redis-7000
+#     # echo: yes
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: stop firewall service
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+# - name: Swappoff disable
+#   command: swapoff -a
+#   ignore_errors: yes
+
+# - name: Redis.conf backup 
+#   command: mv /etc/redis.conf /etc/redis_backup.conf
+
+- name: install_server backup 
+  command: mv /data/redis-{{ REDIS_VERSION }}/utils/install_server.sh /data/redis-{{ REDIS_VERSION }}/utils/install_server_backup.sh
+
+- name: Download install_server file
+  get_url:
+    url: https://raw.githubusercontent.com/eakasak/redis/main/install_server.sh
+    dest: /data/redis-{{ REDIS_VERSION }}/utils/
+    mode: '0755' 
+
+
+- name: edit install_server port 6379 {{ redisport }}
+  lineinfile:
+    path: /data/redis-{{ REDIS_VERSION }}/utils/install_server.sh
+    regexp: 'REDIS_PORT=6379'
+    line: 'REDIS_PORT={{ redisport }}' 
+
+- name: install_server
+  command: ./install_server.sh chdir=/data/redis-{{ REDIS_VERSION }}/utils
+
+- name: Insert configuration cluster config file
+  lineinfile:
+    path: /etc/redis-{{ redisport }}/redis.conf
+    regexp: '# cluster-config-file nodes-6379.conf'
+    line: 'cluster-config-file nodes-{{ redisport }}.conf'  
+ 
+- name: Insert configuration bind section
+  lineinfile:
+    path: /etc/redis-{{ redisport }}/redis.conf
+    regexp: 'bind 127.0.0.1'
+    line: 'bind {{ ip }}'  
+
+- name: Insert configuration requirepass 
+  lineinfile:
+    path: /etc/redis-{{ redisport }}/redis.conf
+    regexp: '# requirepass foobared'
+    line: 'requirepass {{ requirepass }}'   
+
+- name: Insert configuration protected mode 
+  lineinfile:
+    path: /etc/redis-{{ redisport }}/redis.conf
+    regexp: 'protected-mode yes'
+    line: 'protected-mode no'                
+  
+- name: Insert configuration maxclients 
+  lineinfile:
+    path: /etc/redis-{{ redisport }}/redis.conf
+    regexp: '# maxclients 10000'
+    line: 'maxclients {{ maxclients }}'   
+
+- name: Insert configuration masterauth 
+  lineinfile:
+    path: /etc/redis-{{ redisport }}/redis.conf
+    regexp: '# masterauth <master-password>'
+    line: 'masterauth {{ requirepass }}'   
+
+- name: Insert configuration cluster enabled 
+  lineinfile:
+    path: /etc/redis-{{ redisport }}/redis.conf
+    regexp: '# cluster-enabled yes'
+    line: 'cluster-enabled yes'     
+
+# - name: Insert configuration cluster config file
+#   lineinfile:
+#     path: /etc/redis.conf
+#     regexp: '# cluster-config-file nodes-6379.conf'
+#     line: 'cluster-config-file nodes-6379.conf'  
+
+- name: Insert configuration cluster node timeout
+  lineinfile:
+    path: /etc/redis-{{ redisport }}/redis.conf
+    regexp: '# cluster-node-timeout 15000'
+    line: 'cluster-node-timeout {{ nodetimeout }}'
+
+- name: Insert configuration maxmemory policy 
+  lineinfile:
+    path: /etc/redis-{{ redisport }}/redis.conf
+    regexp: '# maxmemory-policy noeviction'
+    line: 'maxmemory-policy volatile-lru'
+
+- name: Insert configuration maxmemory  
+  lineinfile:
+    path: /etc/redis-{{ redisport }}/redis.conf
+    regexp: '# maxmemory <bytes>'
+    line: 'maxmemory {{ maxmemory }}'
+    
+
+# maxmemory-policy noeviction
+
+# - name: Start redis service
+#   service:
+#     name: redis
+#     state: started

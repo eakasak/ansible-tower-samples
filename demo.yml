@@ -1,0 +1,61 @@
+---
+- hosts: localhost
+  gather_facts: no
+  # vars_prompt:
+
+  #   - name: vsphere_url
+  #     prompt: What is your Vsphere IP?
+  #     private: no
+
+  #   - name: username
+  #     prompt: What is your username Vsphere?
+  #     private: no
+
+    # - name: password
+    #   prompt: What is your password Vsphere?
+
+  roles:
+    - vmware-provision
+
+- name: Installation and Configuration redis 
+  hosts: redis
+  gather_facts: yes
+  become_user: root
+  become: yes 
+  roles:
+    - redis
+
+- name: Enable auto start and Start redis service
+  hosts: redis
+  become: yes
+  become_user: root
+  gather_facts: no
+  tasks:
+    - name: Enable auto start
+      command: systemctl enable redis_{{ redisport }}
+
+    - name: Restart for all server
+      reboot:
+
+
+
+- name: Cluster Create
+  hosts: r1
+  become_user: demo
+  become: yes
+  gather_facts: no
+  tasks:
+        - name: Create
+          command:  "{{ clustercommand }}"
+          ignore_errors: yes
+
+
+# - name: Installation and Configuration mysql 
+#   hosts: r1
+#   gather_facts: yes
+#   become: yes 
+#   roles:
+#     - mysql
+
+
+

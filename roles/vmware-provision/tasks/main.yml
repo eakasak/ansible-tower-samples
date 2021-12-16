@@ -1,0 +1,40 @@
+---
+- name: Clone From Template
+  vmware_guest:
+    hostname: "10.10.15.23" ## IP Vsphere
+    username: "eakasak.pib@truedigital.group"
+    password: "Truedigital@2021"
+    validate_certs: no
+    name: "{{ hostvars[item].hostname }}"
+    template: "D2T-Template-POC-ansible" ## Template Name
+    datacenter: "TMP-VSAN-Datacenter" ## Cluster Name
+    resource_pool: "Devops-Test" ## Resource Name
+    folder: "DevOps - Testing" # Folder
+    cluster: "Non-Production-VSAN-Cluster" ## Cluster Name
+    datastore: "DSC_DB-NONPROD-TRUEID-01" ## Datastore Name
+    hardware:
+      memory_mb: "{{ hostvars[item].mem }}"
+      num_cpus: "{{ hostvars[item].cpu }}"
+      hotadd_cpu: True
+      hotremove_cpu: True
+      hotadd_memory: True
+    networks:
+      - name: "{{ hostvars[item].nwname }}"
+        ip: "{{ hostvars[item].ip }}"
+        netmask: "{{ hostvars[item].netmask }}"
+        gateway: "{{ hostvars[item].gw }}"
+        type: static
+    customization:
+      hostname: "{{ hostvars[item].hostname }}"
+      dns_servers:
+        - 10.198.101.39 # DNS Server1
+        - 10.198.101.40 # DNS Server2
+    state: poweredon
+  delegate_to: localhost
+  loop: "{{ groups['all'] }}"
+
+- name: wait for SSH port up
+  wait_for:
+    timeout: 60
+  delegate_to: localhost
+
