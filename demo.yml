@@ -13,9 +13,39 @@
 
     # - name: password
     #   prompt: What is your password Vsphere?
-
-  roles:
-    - vmware-provision
+  tasks:
+    - name: Clone From Template
+      vmware_guest:
+        hostname: "10.10.15.23" ## IP Vsphere
+        username: "eakasak.pib@truedigital.group"
+        password: "Truedigital@2021"
+        validate_certs: no
+        name: "Ansible-AWX-A1"
+        template: "D2T-Template-POC-ansible" ## Template Name
+        datacenter: "TMP-VSAN-Datacenter" ## Cluster Name
+        resource_pool: "Devops-Test" ## Resource Name
+        folder: "DevOps - Testing" # Folder
+        cluster: "Non-Production-VSAN-Cluster" ## Cluster Name
+        datastore: "DSC_DB-NONPROD-TRUEID-01" ## Datastore Name
+        hardware:
+          memory_mb: "8192"
+          num_cpus: "2"
+          hotadd_cpu: True
+          hotremove_cpu: True
+          hotadd_memory: True
+        networks:
+          - name: "DB-NON-Production(3265)"
+            ip: "10.100.65.207"
+            netmask: "255.255.255.0"
+            gateway: "10.100.65.1"
+            type: static
+        customization:
+          hostname: "Ansible-AWX-A1"
+          dns_servers:
+            - 10.198.101.39 # DNS Server1
+            - 10.198.101.40 # DNS Server2
+        state: poweredon
+      delegate_to: localhost
 
 # - name: Installation and Configuration redis 
 #   hosts: redis
