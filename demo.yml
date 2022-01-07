@@ -35,7 +35,7 @@
           hotadd_memory: True
         networks:
           - name: "DB-NON-Production(3265)"
-            ip: "10.100.65.207"
+            ip: "10.100.65.210"
             netmask: "255.255.255.0"
             gateway: "10.100.65.1"
             type: static
