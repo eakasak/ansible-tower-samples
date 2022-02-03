@@ -20,7 +20,7 @@
         username: "eakasak.pib@truedigital.group"
         password: "Truedigital@2021"
         validate_certs: no
-        name: "Ansible-AWX-A1"
+        name: "{{hostname}}"
         template: "D2T-Template-POC-ansible" ## Template Name
         datacenter: "TMP-VSAN-Datacenter" ## Cluster Name
         resource_pool: "Devops-Test" ## Resource Name
@@ -35,12 +35,12 @@
           hotadd_memory: True
         networks:
           - name: "DB-NON-Production(3265)"
-            ip: "10.100.65.210"
+            ip: "{{ip}}"
             netmask: "255.255.255.0"
             gateway: "10.100.65.1"
             type: static
         customization:
-          hostname: "Ansible-AWX-A1"
+          hostname: "{{hostname}}"
           dns_servers:
             - 10.198.101.39 # DNS Server1
             - 10.198.101.40 # DNS Server2
