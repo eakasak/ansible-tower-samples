@@ -20,7 +20,7 @@
         username: "{{vm_username}}"
         password: "{{vm_password}}"
         validate_certs: no
-        name: "{{hostname}}"
+        name: "{{vm_name}}"
         template: "{{template}}" ## Template Name
         datacenter: "{{datacenter}}" ## Cluster Name
         resource_pool: "{{resource_pool}}" ## Resource Name
@@ -28,8 +28,8 @@
         cluster: "{{cluster}}" ## Cluster Name
         datastore: "{{datastore}}" ## Datastore Name
         hardware:
-          memory_mb: "{{datastore}}"
-          num_cpus: "{{datastore}}"
+          memory_mb: "{{memory_mb}}"
+          num_cpus: "{{num_cpus}}"
           hotadd_cpu: True
           hotremove_cpu: True
           hotadd_memory: True
@@ -40,7 +40,7 @@
             gateway: "{{nw_gateway}}"
             type: static
         customization:
-          hostname: "{{hostname}}"
+          hostname: "{{vm_name}}"
           dns_servers:
             - 10.198.101.39 # DNS Server1
             - 10.198.101.40 # DNS Server2
