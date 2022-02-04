@@ -16,28 +16,28 @@
   tasks:
     - name: Clone From Template
       vmware_guest:
-        hostname: "10.10.15.23" ## IP Vsphere
-        username: "eakasak.pib@truedigital.group"
-        password: "Truedigital@2021"
+        hostname: "{{vm_hostname}}" ## IP Vsphere
+        username: "{{vm_username}}"
+        password: "{{vm_password}}"
         validate_certs: no
         name: "{{hostname}}"
-        template: "D2T-Template-POC-ansible" ## Template Name
-        datacenter: "TMP-VSAN-Datacenter" ## Cluster Name
-        resource_pool: "Devops-Test" ## Resource Name
-        folder: "DevOps - Testing" # Folder
-        cluster: "Non-Production-VSAN-Cluster" ## Cluster Name
-        datastore: "DSC_DB-NONPROD-TRUEID-01" ## Datastore Name
+        template: "{{template}}" ## Template Name
+        datacenter: "{{datacenter}}" ## Cluster Name
+        resource_pool: "{{resource_pool}}" ## Resource Name
+        folder: "{{folder}}" # Folder
+        cluster: "{{cluster}}" ## Cluster Name
+        datastore: "{{datastore}}" ## Datastore Name
         hardware:
-          memory_mb: "8192"
-          num_cpus: "2"
+          memory_mb: "{{datastore}}"
+          num_cpus: "{{datastore}}"
           hotadd_cpu: True
           hotremove_cpu: True
           hotadd_memory: True
         networks:
-          - name: "DB-NON-Production(3265)"
+          - name: "{{nw_name}}"
             ip: "{{ip}}"
-            netmask: "255.255.255.0"
-            gateway: "10.100.65.1"
+            netmask: "{{nw_netmask}}"
+            gateway: "{{nw_gateway}}"
             type: static
         customization:
           hostname: "{{hostname}}"
